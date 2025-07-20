@@ -707,6 +707,7 @@ module.exports = grammar({
 
     union_specifier: $ => prec.right(seq(
       'union',
+      optional($.attribute_specifier),
       optional($.ms_declspec_modifier),
       choice(
         seq(
