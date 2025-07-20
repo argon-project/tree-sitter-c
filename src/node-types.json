@@ -4377,8 +4377,43 @@
   },
   {
     "type": "comment",
-    "named": true,
-    "extra": true
+    "named": true
+  },
+  {
+    "type": "comment:/*!",
+    "named": true
+  },
+  {
+    "type": "comment:/*!<",
+    "named": true
+  },
+  {
+    "type": "comment:/**",
+    "named": true
+  },
+  {
+    "type": "comment:/**<",
+    "named": true
+  },
+  {
+    "type": "comment://!",
+    "named": true
+  },
+  {
+    "type": "comment://!<",
+    "named": true
+  },
+  {
+    "type": "comment:///",
+    "named": true
+  },
+  {
+    "type": "comment:////",
+    "named": true
+  },
+  {
+    "type": "comment:///<",
+    "named": true
   },
   {
     "type": "const",

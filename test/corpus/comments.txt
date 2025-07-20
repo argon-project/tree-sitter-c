@@ -1,0 +1,241 @@
+================================================================================
+Single-line comments with blank space in between
+================================================================================
+
+// Comment
+
+/// Comment
+
+///< Comment
+
+//! Comment
+
+//!< Comment
+
+/* Normal Comment */
+
+/*< Normal Comment */
+
+/** Comment */
+
+/**< Comment */
+
+/*! Comment */
+
+/*!< Comment */
+
+--------------------------------------------------------------------------------
+
+(translation_unit
+  (comment)
+  (comment:///)
+  (comment:///<)
+  (comment://!)
+  (comment://!<)
+  (comment)
+  (comment)
+  (comment:/**)
+  (comment:/**<)
+  (comment:/*!)
+  (comment:/*!<)
+)
+
+================================================================================
+Single-line comments without blank space in between
+================================================================================
+
+// Comment
+/// Comment
+///< Comment
+//! Comment
+//!< Comment
+/* Normal Comment */
+/*< Normal Comment */
+/** Comment */
+/**< Comment */
+/*! Comment */
+/*!< Comment */
+
+--------------------------------------------------------------------------------
+
+(translation_unit
+  (comment)
+  (comment:///)
+  (comment:///<)
+  (comment://!)
+  (comment://!<)
+  (comment)
+  (comment)
+  (comment:/**)
+  (comment:/**<)
+  (comment:/*!)
+  (comment:/*!<)
+)
+
+================================================================================
+Multiline comments with blank space in between
+================================================================================
+
+// Comment
+// Comment
+
+/// Comment
+/// Comment
+
+///< Comment
+///< Comment
+
+//! Comment
+//! Comment
+
+//!< Comment
+//!< Comment
+
+/* Normal Comment 
+ * More
+   More
+ * More
+ */
+
+/*< Normal Comment 
+ * More
+   More
+ * More
+ */
+
+/** Comment 
+ * More
+   More
+ * More
+ */
+
+/**< Comment 
+ * More
+   More
+ * More
+ */
+
+/*! Comment 
+ * More
+   More
+ * More
+ */
+
+/*!< Comment 
+ * More
+   More
+ * More
+ */
+
+--------------------------------------------------------------------------------
+
+(translation_unit
+  (comment)
+  (comment)
+  (comment:///)
+  (comment:///<)
+  (comment://!)
+  (comment://!<)
+  (comment)
+  (comment)
+  (comment:/**)
+  (comment:/**<)
+  (comment:/*!)
+  (comment:/*!<)
+)
+
+================================================================================
+Multiline comments without blank space in between
+================================================================================
+
+// Comment
+// Comment
+/// Comment
+/// Comment
+///< Comment
+///< Comment
+//! Comment
+//! Comment
+//!< Comment
+//!< Comment
+/* Normal Comment 
+ * More
+   More
+ * More
+ */
+/*< Normal Comment 
+ * More
+   More
+ * More
+ */
+/** Comment 
+ * More
+   More
+ * More
+ */
+/**< Comment 
+ * More
+   More
+ * More
+ */
+/*! Comment 
+ * More
+   More
+ * More
+ */
+/*!< Comment 
+ * More
+   More
+ * More
+ */
+
+--------------------------------------------------------------------------------
+
+(translation_unit
+  (comment)
+  (comment)
+  (comment:///)
+  (comment:///<)
+  (comment://!)
+  (comment://!<)
+  (comment)
+  (comment)
+  (comment:/**)
+  (comment:/**<)
+  (comment:/*!)
+  (comment:/*!<)
+)
+
+================================================================================
+Weird comments
+================================================================================
+
+/*********************//**
+ * Comment
+ *********************/
+
+/*********************//*!
+ * Comment
+ *********************/
+
+/**
+/* Comment
+/*********************/
+
+////////////////
+/// Comment
+/// Comment
+///////////////
+
+--------------------------------------------------------------------------------
+
+(translation_unit
+  (comment:/**)
+  (comment:/**)
+  (comment:/**)
+  (comment:/*!)
+  (comment:/**)
+  (comment:////)
+  (comment:///)
+  (comment:////)
+)

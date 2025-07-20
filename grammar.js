@@ -1364,35 +1364,62 @@ module.exports = grammar({
       '//',
       seq(
         '/*',
-        /[^*]*\*+([^/*][^*]*\*+)*/,
+        // Do not match *! directly after /* as this supposed to be matched by doc_enclosed_comment
+        // below. Previously the start of the following regex has been [^*]+ instead of [^*!][^*]* now.
+        // For an explanation of the latter capturing group ([^/*][^*]*\*+)*, please refer
+        // to doc_enclosed comment.
+        /[^*!][^*]*\*+([^/*][^*]*\*+)*/,
         '/',
       )
     )),
 
     _comment: $ => choice(
       $.comment,
-      choice(
-        // Ignore banners:
-        //   ////////
-        //   /// Comment
-        prec(4, token(seq('////', /\/*/))),
 
-        prec(4, doc_multiline_comment($, '///')),
-        // If the input does not end with a newline but, e.g., with EOF, provide fallback.
-        // doc_multiline_comment requires comment lines to end with a newline
-        // to ensure the first three slashes of the next banner line aren't also matched:
-        //   /// Comment
-        //   ////////// <- If doc_multiline_comment would not always match the entire line (until newline)
-        // it would match the /// prefix of the next line. This becomes a problem
-        // when that banner line has only four slashes, causing only one slash to be remaining, which isn't
-        // a valid comment anymore.
-        prec(3, doc_single_line_comment($, '///')),
+      prec(10, doc_enclosed_comment($, '*<', true)),
+      prec(9, doc_enclosed_comment($, '!<', true)),
 
-        prec(2, doc_multiline_comment($, '//!')),
-        prec(1, doc_single_line_comment($, '//1')),
-      ),
+      prec(8, doc_enclosed_comment($, '*', true)),
+      prec(7, doc_enclosed_comment($, '!', true)),
+
+      prec(6, doc_multiline_comment($, '///<', false)),
+      prec(5, doc_multiline_comment($, '//!<', false)),
+
+      // Ignore banners:
+      //   ////////
+      //   /// Comment
+      prec(4, _doc_alias($, '////', token(seq('////', /\/*/)))),
+
+      prec(4, doc_multiline_comment($, '///', true)),
+      // If the input does not end with a newline but, e.g., with EOF, provide fallback.
+      // doc_multiline_comment requires comment lines to end with a newline
+      // to ensure the first three slashes of the next banner line aren't also matched:
+      //   /// Comment
+      //   ////////// <- If doc_multiline_comment would not always match the entire line (until newline)
+      // it would match the /// prefix of the next line. This becomes a problem
+      // when that banner line has only four slashes, causing only one slash to be remaining, which isn't
+      // a valid comment anymore.
+      // This does also apply to /// and ///< which are different AST nodes.
+      prec(3, doc_single_line_comment($, '///')),
+
+      prec(2, doc_multiline_comment($, '//!', true)),
+      // Same story as with /// and ///< above.
+      // This
+      //   //! Comment
+      //   //!< Comment <- If doc_multiline_comment would not always match the entire line (until newline)
+      // it would match the //! prefix of the next line. This becomes a problem
+      // when that //! prefix is actually part of the //!< prefix, causing the next //! partial prefix to be
+      // scanned, leaving only < behind which is a syntax error.
+      prec(1, doc_single_line_comment($, '//!')),
+
+      // To see the effect of splitting /// and //! into two rules
+      // replace, e.g., the latter two with
+      // prec(2, doc_multiline_comment($, '//!', false)),
+      // and run tree-sitter generate and tree-sitter test.
+      // In the tests you will see that the error described above occurs.
+      // You should see tree sitter trying to parse the remainder < ... of a //!< comment,
+      // causing an error.
     ),
-
 
   },
 });
@@ -1405,11 +1432,11 @@ module.exports = grammar({
  * 
  * @param {Rule} content Comment rule
  *
- * @returns {AliasRule} Renames rule so that it will be called comment(PREFIX)
+ * @returns {AliasRule} Renames rule so that it will be called comment:PREFIX
  * with PREFIX being the given prefix.
  */
 function _doc_alias($, prefix, content) {
-  return alias(content, $[`comment(${prefix})`])
+  return alias(content, $[`comment:${prefix}`])
 }
 
 /**
@@ -1426,7 +1453,7 @@ function _doc_line_comment($, prefix) {
     prefix,
     // This prevents lines like /////// from being matched, which you
     // can use as banners with Doxygen
-    /((\\+(.|\r?\n)|[^\\\n/])(\\+(.|\r?\n)|[^\\\n])*)|()/
+    /((\\+(.|\r?\n)|[^\\\n/<])(\\+(.|\r?\n)|[^\\\n])*)|()/
   )
 }
 
@@ -1437,7 +1464,7 @@ function _doc_line_comment($, prefix) {
  * @param {string} prefix Comment prefix
  *
  * @returns {AliasRule} A rule that matches a single-line comment starting with the given
- * prefix. The rule will be called comment(PREFIX) with PREFIX being the given prefix.
+ * prefix. The rule will be called comment:PREFIX with PREFIX being the given prefix.
  */
 function doc_single_line_comment($, prefix) {
   let content = token(_doc_line_comment($, prefix))
@@ -1449,17 +1476,20 @@ function doc_single_line_comment($, prefix) {
  * @param {GrammarSymbols<string>} $ Tree-sitter context
  *
  * @param {string} prefix Comment prefix
+ * 
+ * @param {boolean} require_newline A boolean valud indicating whether to require newlines
  *
  * @returns {AliasRule} A rule that matches a comment potentially spanning multiple lines
  * where each line is prefixed with the given prefix. Lines are expected to end with a newline.
- * The rule will be called comment(PREFIX) with PREFIX being the given prefix.
+ * The rule will be called comment:PREFIX with PREFIX being the given prefix.
  */
-function doc_multiline_comment($, prefix) {
-  let line = seq(_doc_line_comment($, prefix), /(\r\n|\r|\n)/)
+function doc_multiline_comment($, prefix, require_newline) {
+  let line = seq(_doc_line_comment($, prefix), require_newline ? /(\r\n|\r|\n)/ : choice())
   let content = token(seq(
     line,
     repeat(
       seq(
+        require_newline ? choice() : /(\r\n|\r|\n)/,
         /[^\S\n\r]*/,
         line,
       )
@@ -1467,6 +1497,46 @@ function doc_multiline_comment($, prefix) {
   ))
   
   return _doc_alias($, prefix, content)
+}
+
+function doc_enclosed_comment($, marker, allow_repeating_marker) {
+  let prefix = '/*'
+  let content = token(seq(
+    prefix,
+    marker,
+    allow_repeating_marker ? repeat(marker) : choice(),
+    // This regex works as follows:
+    //
+    // We want to prevent */ from occuring in the middle.
+    // So the goal is to force you to have every * followed by nothing
+    // or something else other than /.
+    //
+    // First of all, empty comments (between /***... and  ..****/)
+    // are allowed, see * behind the capture group.
+    //
+    // Second, you cannot start with *. This makes sense as
+    // this is handled by the prefix above. Also, you cannot start with /
+    // as that would also immediately close the comment.
+    // We have now established why it makes sense to have [^/*] first in the
+    // capture group. The next character after the last * of the prefix must neither
+    // be a star nor a slash ('contentful character').
+    //
+    // Third, after the first 'contentful character', if you decide to type *, then
+    // we want to prevent you from typing / next. With \**, we allow you to type
+    // a star, but if you would now want to type a slash, you would enter
+    // the capture group again, with the [^/*] group preventing you from typing that
+    // slash.
+    // 
+    // Fourth, the [^*]* in the capture group exists to 'force' every sequence of stars
+    // to end the capture group and leave no other possibly then to reenter the group from the
+    // beginning. Essentially, [^*]*\** just means: capture everything until you see
+    // the next star. If there's more, reenter the group.
+    /([^/*][^*]*\**)*/,
+    /\**/,
+    '*/',
+  ))
+
+  return _doc_alias($, prefix + marker, content)
 }
 
 /**

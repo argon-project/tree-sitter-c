@@ -54,4 +54,27 @@ mod tests {
             .set_language(&super::LANGUAGE.into())
             .expect("Error loading C parser");
     }
+
+    /// Tests (1) that comment with specific prefixes relevant for documentation generators
+    /// are being recognized correctly and (2) that these comments are still being recognized
+    /// even if followed by a trailing EOF instead of a newline.
+    #[test]
+    fn test_can_recognize_comment_with_eof() {
+        let mut parser = tree_sitter::Parser::new();
+        parser
+            .set_language(&super::LANGUAGE.into())
+            .expect("Error loading C parser");
+
+        for prefix in ["///", "//!", "///<", "//!<", "/**", "/*!", "/**<", "/*!<"] {
+            let mut comment = prefix.to_string() + "comment";
+            if prefix.starts_with("/*") {
+                // close C-style comments
+                comment += "*/"
+            }
+            
+            let tree = parser.parse(&comment, None).unwrap();
+            let name = tree.root_node().child(0).unwrap().kind();
+            assert_eq!(name, "comment:".to_string() + prefix)
+        }
+    }
 }

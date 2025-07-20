@@ -376,11 +376,11 @@ int b;
 --------------------------------------------------------------------------------
 
 (translation_unit
-  (comment)
+  (comment:/**)
   (declaration
     (primitive_type)
     (identifier))
-  (comment)
+  (comment:/**)
   (declaration
     (primitive_type)
     (identifier)))

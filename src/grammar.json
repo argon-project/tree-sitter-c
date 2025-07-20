@@ -1940,7 +1940,7 @@
     },
     "preproc_directive": {
       "type": "PATTERN",
-      "value": "#[ \\t]*[a-zA-Z0-9]\\w*"
+      "value": "#[ \\t]*[^e][a-zA-Z0-9]\\w*"
     },
     "_preproc_expression": {
       "type": "CHOICE",
@@ -5343,6 +5343,18 @@
           {
             "type": "STRING",
             "value": "union"
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "attribute_specifier"
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
           },
           {
             "type": "CHOICE",
@@ -9609,9 +9621,13 @@
               },
               {
                 "type": "PATTERN",
-                "value": "(\\\\+(.|\\r?\\n)|[^\\\\\\n])*"
+                "value": "(\\\\+(.|\\r?\\n)|[^\\\\\\n!/])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*"
               }
             ]
+          },
+          {
+            "type": "STRING",
+            "value": "//"
           },
           {
             "type": "SEQ",
@@ -9622,7 +9638,7 @@
               },
               {
                 "type": "PATTERN",
-                "value": "[^*]*\\*+([^/*][^*]*\\*+)*"
+                "value": "[^*!][^*]*\\*+([^/*][^*]*\\*+)*"
               },
               {
                 "type": "STRING",
@@ -9632,6 +9648,574 @@
           }
         ]
       }
+    },
+    "_comment": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "comment"
+        },
+        {
+          "type": "PREC",
+          "value": 10,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "/*"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*<"
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "STRING",
+                      "value": "*<"
+                    }
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "([^/*][^*]*\\**)*"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\**"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*/"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:/**<"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 9,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "/*"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "!<"
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "STRING",
+                      "value": "!<"
+                    }
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "([^/*][^*]*\\**)*"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\**"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*/"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:/*!<"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 8,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "/*"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*"
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "STRING",
+                      "value": "*"
+                    }
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "([^/*][^*]*\\**)*"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\**"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*/"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:/**"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 7,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "/*"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "!"
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "STRING",
+                      "value": "!"
+                    }
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "([^/*][^*]*\\**)*"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\**"
+                  },
+                  {
+                    "type": "STRING",
+                    "value": "*/"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:/*!"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 6,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": "///<"
+                          },
+                          {
+                            "type": "PATTERN",
+                            "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CHOICE",
+                        "members": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "PATTERN",
+                          "value": "(\\r\\n|\\r|\\n)"
+                        },
+                        {
+                          "type": "PATTERN",
+                          "value": "[^\\S\\n\\r]*"
+                        },
+                        {
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "STRING",
+                                  "value": "///<"
+                                },
+                                {
+                                  "type": "PATTERN",
+                                  "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "CHOICE",
+                              "members": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:///<"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 5,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": "//!<"
+                          },
+                          {
+                            "type": "PATTERN",
+                            "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "CHOICE",
+                        "members": []
+                      }
+                    ]
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "PATTERN",
+                          "value": "(\\r\\n|\\r|\\n)"
+                        },
+                        {
+                          "type": "PATTERN",
+                          "value": "[^\\S\\n\\r]*"
+                        },
+                        {
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "STRING",
+                                  "value": "//!<"
+                                },
+                                {
+                                  "type": "PATTERN",
+                                  "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "CHOICE",
+                              "members": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment://!<"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 4,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "////"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "\\/*"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:////"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 4,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": "///"
+                          },
+                          {
+                            "type": "PATTERN",
+                            "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "PATTERN",
+                        "value": "(\\r\\n|\\r|\\n)"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "CHOICE",
+                          "members": []
+                        },
+                        {
+                          "type": "PATTERN",
+                          "value": "[^\\S\\n\\r]*"
+                        },
+                        {
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "STRING",
+                                  "value": "///"
+                                },
+                                {
+                                  "type": "PATTERN",
+                                  "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "PATTERN",
+                              "value": "(\\r\\n|\\r|\\n)"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:///"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 3,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "///"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment:///"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 2,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": "//!"
+                          },
+                          {
+                            "type": "PATTERN",
+                            "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "PATTERN",
+                        "value": "(\\r\\n|\\r|\\n)"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "REPEAT",
+                    "content": {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "CHOICE",
+                          "members": []
+                        },
+                        {
+                          "type": "PATTERN",
+                          "value": "[^\\S\\n\\r]*"
+                        },
+                        {
+                          "type": "SEQ",
+                          "members": [
+                            {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "STRING",
+                                  "value": "//!"
+                                },
+                                {
+                                  "type": "PATTERN",
+                                  "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "PATTERN",
+                              "value": "(\\r\\n|\\r|\\n)"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment://!"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": 1,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "TOKEN",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "//!"
+                  },
+                  {
+                    "type": "PATTERN",
+                    "value": "((\\\\+(.|\\r?\\n)|[^\\\\\\n/<])(\\\\+(.|\\r?\\n)|[^\\\\\\n])*)|()"
+                  }
+                ]
+              }
+            },
+            "named": true,
+            "value": "comment://!"
+          }
+        }
+      ]
     }
   },
   "extras": [
@@ -9641,7 +10225,7 @@
     },
     {
       "type": "SYMBOL",
-      "name": "comment"
+      "name": "_comment"
     }
   ],
   "conflicts": [
