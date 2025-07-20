@@ -57,7 +57,7 @@ module.exports = grammar({
 
   extras: $ => [
     /\s|\\\r?\n/,
-    $.comment,
+    $._comment,
   ],
 
   inline: $ => [
@@ -161,8 +161,6 @@ module.exports = grammar({
     ...preprocIf('_in_field_declaration_list', $ => $._field_declaration_list_item),
     ...preprocIf('_in_enumerator_list', $ => seq($.enumerator, ',')),
     ...preprocIf('_in_enumerator_list_no_comma', $ => $.enumerator, -1),
-
-    _endif: _ => prec(1, /#[ \t]*endif\w*/),
 
     preproc_arg: _ => token(prec(-1, /\S([^/\n]|\/[^*]|\\\r?\n)*/)),
     preproc_directive: _ => /#[ \t]*[^e][a-zA-Z0-9]\w*/,
@@ -1361,16 +1359,115 @@ module.exports = grammar({
     )),
 
     // http://stackoverflow.com/questions/13014947/regex-to-match-a-c-style-multiline-comment/36328890#36328890
-    comment: _ => token(choice(
-      seq('//', /(\\+(.|\r?\n)|[^\\\n])*/),
+    comment: $ => token(choice(
+      seq('//', /(\\+(.|\r?\n)|[^\\\n!/])(\\+(.|\r?\n)|[^\\\n])*/),
+      '//',
       seq(
         '/*',
         /[^*]*\*+([^/*][^*]*\*+)*/,
         '/',
-      ),
+      )
     )),
+
+    _comment: $ => choice(
+      $.comment,
+      choice(
+        // Ignore banners:
+        //   ////////
+        //   /// Comment
+        prec(4, token(seq('////', /\/*/))),
+
+        prec(4, doc_multiline_comment($, '///')),
+        // If the input does not end with a newline but, e.g., with EOF, provide fallback.
+        // doc_multiline_comment requires comment lines to end with a newline
+        // to ensure the first three slashes of the next banner line aren't also matched:
+        //   /// Comment
+        //   ////////// <- If doc_multiline_comment would not always match the entire line (until newline)
+        // it would match the /// prefix of the next line. This becomes a problem
+        // when that banner line has only four slashes, causing only one slash to be remaining, which isn't
+        // a valid comment anymore.
+        prec(3, doc_single_line_comment($, '///')),
+
+        prec(2, doc_multiline_comment($, '//!')),
+        prec(1, doc_single_line_comment($, '//1')),
+      ),
+    ),
+
+
   },
 });
+
+/**
+ *
+ * @param {GrammarSymbols<string>} $ Tree-sitter context
+ *
+ * @param {string} prefix Comment prefix
+ * 
+ * @param {Rule} content Comment rule
+ *
+ * @returns {AliasRule} Renames rule so that it will be called comment(PREFIX)
+ * with PREFIX being the given prefix.
+ */
+function _doc_alias($, prefix, content) {
+  return alias(content, $[`comment(${prefix})`])
+}
+
+/**
+ *
+ * @param {GrammarSymbols<string>} $ Tree-sitter context
+ *
+ * @param {string} prefix Comment prefix
+ *
+ * @returns {SeqRule} A rule that matches a single-line comment starting with the given
+ * prefix.
+ */
+function _doc_line_comment($, prefix) {
+  return seq(
+    prefix,
+    // This prevents lines like /////// from being matched, which you
+    // can use as banners with Doxygen
+    /((\\+(.|\r?\n)|[^\\\n/])(\\+(.|\r?\n)|[^\\\n])*)|()/
+  )
+}
+
+/**
+ *
+ * @param {GrammarSymbols<string>} $ Tree-sitter context
+ *
+ * @param {string} prefix Comment prefix
+ *
+ * @returns {AliasRule} A rule that matches a single-line comment starting with the given
+ * prefix. The rule will be called comment(PREFIX) with PREFIX being the given prefix.
+ */
+function doc_single_line_comment($, prefix) {
+  let content = token(_doc_line_comment($, prefix))
+  return _doc_alias($, prefix, content) 
+}
+
+/**
+ *
+ * @param {GrammarSymbols<string>} $ Tree-sitter context
+ *
+ * @param {string} prefix Comment prefix
+ *
+ * @returns {AliasRule} A rule that matches a comment potentially spanning multiple lines
+ * where each line is prefixed with the given prefix. Lines are expected to end with a newline.
+ * The rule will be called comment(PREFIX) with PREFIX being the given prefix.
+ */
+function doc_multiline_comment($, prefix) {
+  let line = seq(_doc_line_comment($, prefix), /(\r\n|\r|\n)/)
+  let content = token(seq(
+    line,
+    repeat(
+      seq(
+        /[^\S\n\r]*/,
+        line,
+      )
+    )
+  ))
+  
+  return _doc_alias($, prefix, content)
+}
 
 /**
  *
